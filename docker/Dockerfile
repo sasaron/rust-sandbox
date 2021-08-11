@@ -1,9 +1,13 @@
 FROM rust:1.54 as builder
-WORKDIR /usr/src/rust-sandbox
-COPY . .
-#RUN cargo install --path .
+ARG APP="hello_world"
+ARG RUNTIME="x86_64-unknown-linux-musl"
+WORKDIR /usr/src/${APP}
+COPY ./${APP} .
+RUN rustup target add ${RUNTIME} \
+    && cargo build --release --target=${RUNTIME}
 
-#FROM alpine:latest
-#RUN apk --no-cache add ca-certificates
-#COPY --from=builder /usr/local/cargo/bin/rust-sandbox /usr/local/bin/rust-sandbox
-#CMD ["rust-sandbox"]
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+ARG APP="hello_world"
+COPY --from=builder /usr/src/${APP}/target/release/${APP} /usr/local/bin/${APP}
+CMD ${APP}
